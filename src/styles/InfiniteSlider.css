@@ -1,0 +1,102 @@
+/* InfiniteSlider.css - 无限滑动条样式 */
+
+.inf-slider {
+  display: flex; /* 水平布局 */
+  align-items: center; /* 垂直居中 */
+  gap: 8px; /* 间距 */
+  padding: 4px 0; /* 上下内边距 */
+}
+
+.inf-slider-label {
+  font-size: 12px; /* 标签字号 */
+  color: rgb(111, 125, 176); /* 与面板统一色 */
+  min-width: 60px; /* 最小宽度 */
+  white-space: nowrap; /* 不换行 */
+}
+
+.inf-slider-input-wrap {
+  position: relative; /* 弹出层定位锚点 */
+}
+
+.inf-slider-input {
+  width: 80px; /* 输入框宽度 */
+  height: 28px; /* 输入框高度 */
+  border: 1.5px solid rgba(111, 125, 176, 0.3); /* 灰色轮廓 */
+  border-radius: 999px; /* 胶囊圆角 */
+  background: #fff; /* 白色背景 */
+  color: #3a3f5c; /* 深色文字 */
+  font-size: 12px; /* 字号 */
+  font-weight: 600; /* 加粗 */
+  text-align: center; /* 居中 */
+  outline: none; /* 去掉默认轮廓 */
+  cursor: text; /* 文本光标 */
+}
+
+.inf-slider-input:focus {
+  border-color: #7c5cfc; /* 聚焦紫色边框 */
+}
+
+/* ========== 弹出滑动条 ========== */
+
+.inf-slider-popup {
+  position: fixed; /* 脱离所有父容器overflow限制 */
+  transform: translateX(-50%) translateY(-100%); /* 居中并上移到输入框上方 */
+  z-index: 9999; /* 确保在最上层 */
+}
+
+.inf-slider-viewport {
+  position: relative; /* 定位容器 */
+  width: 160px; /* 滑动条宽度 */
+  height: 32px; /* 滑动条高度 */
+  overflow: hidden; /* 隐藏溢出 */
+  cursor: ew-resize; /* 左右拖动光标 */
+  border-radius: 999px; /* 胶囊圆角 */
+  background: #fff; /* 白色背景 */
+  border: 1.5px solid rgba(111, 125, 176, 0.3); /* 灰色轮廓 */
+  box-shadow: 0 2px 12px rgba(111, 125, 176, 0.2); /* 弹出阴影 */
+  user-select: none; /* 禁止选中 */
+}
+
+.inf-slider-track {
+  position: absolute; /* 通过left整体平移 */
+  top: 0; /* 顶部 */
+  height: 100%; /* 撑满 */
+  pointer-events: none; /* 不拦截事件 */
+}
+
+.inf-slider-tick {
+  position: absolute; /* track内定位 */
+  bottom: 0; /* 底部对齐 */
+  width: 1px; /* 刻度线宽 */
+  height: 35%; /* 小刻度高度 */
+  background: rgba(111, 125, 176, 0.3); /* 蓝灰色 */
+}
+
+.inf-slider-tick.major {
+  height: 55%; /* 主刻度更高 */
+  background: rgba(111, 125, 176, 0.6); /* 主刻度更深 */
+}
+
+.inf-slider-tick-label {
+  position: absolute; /* 绝对定位 */
+  top: 0; /* tick顶端 */
+  left: 50%; /* 居中 */
+  transform: translateX(-50%); /* 居中修正 */
+  font-size: 9px; /* 字号 */
+  font-weight: 600; /* 加粗 */
+  color: rgb(111, 125, 176); /* 蓝灰色 */
+  white-space: nowrap; /* 不换行 */
+  line-height: 1; /* 紧凑 */
+}
+
+.inf-slider-needle {
+  position: absolute; /* 绝对定位 */
+  left: 50%; /* 居中 */
+  top: 0; /* 顶部 */
+  bottom: 0; /* 底部 */
+  width: 2px; /* 宽度 */
+  background: #7c5cfc; /* 紫色 */
+  transform: translateX(-50%); /* 居中修正 */
+  pointer-events: none; /* 不拦截 */
+  z-index: 2; /* 上层 */
+}
