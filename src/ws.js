@@ -122,6 +122,11 @@ class WsManager {
   handleMsg(data) {
     console.log('📥 收到消息:', data.type, data)                    // 输出收到的消息
 
+    if (data.type === 'registryUpdated') {                              // 如果是热重载推送的注册表更新
+      setState({ registry: data.data })                                // 更新store中的注册表，Sidebar自动响应
+      return
+    }
+
     if (data.type === 'getRegistry') {                                 // 如果是节点注册表响应
       const pending = this.pending.get(data.id)                    // 获取对应的待处理请求
       if (pending) {                                               // 如果存在

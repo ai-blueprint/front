@@ -71,3 +71,25 @@
 .react-flow__node .container {
   transition: 0.2s ease;
 }
+
+/**
+ * 过时节点遮罩
+ */
+.stale-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(80, 80, 80, 0.6);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.stale-overlay span {
+  color: white;
+  font-size: 11px;
+  font-weight: bold;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
