@@ -32,6 +32,27 @@ import { getState, setState } from '../store'                       // 导入状
 import { generateNodeId } from '../utils/generateId'                // 导入节点ID生成函数
 
 /**
+ * computeStructHash - 计算节点结构指纹
+ *
+ * 用法示例：
+ *   const hash = computeStructHash(nodeDef)                         // 从registry节点定义生成指纹
+ *
+ * @param {Object} nodeDef - 节点定义，包含ports和params
+ * @returns {string} - 结构指纹字符串
+ */
+export function computeStructHash(nodeDef) {
+  const ports = nodeDef?.ports || {}                                  // 获取端口定义
+  const params = nodeDef?.params || {}                                // 获取参数定义
+  const inputKeys = Object.keys(ports.input || ports.in || {}).sort().join(",")  // 输入端口key排序拼接
+  const outputKeys = Object.keys(ports.output || ports.out || {}).sort().join(",")  // 输出端口key排序拼接
+  const paramParts = Object.keys(params).sort().map(k => {            // 参数key排序，每个拼接type
+    const type = params[k]?.type || ""                                // 获取参数类型
+    return `${k}:${type}`                                             // 拼接 key:type
+  }).join(",")
+  return `in[${inputKeys}]out[${outputKeys}]params[${paramParts}]`   // 返回完整指纹字符串
+}
+
+/**
  * findCategory - 通过opcode查找所属分类名和分类定义
  *
  * 用法示例：
@@ -175,7 +196,8 @@ export function createNode(opcodeOrConfig, options = {}) {
       params: { ...defaultParams, ...params },                     // 合并默认参数和传入参数
       ports: nodeDef.ports || { in: [], out: [] },                 // 端口定义，registry中格式是 { in: [], out: [] }
       category: categoryName,                                      // 节点分类名，通过findCategory从registry.categories中反查得到
-      color: categoryDef?.color || '#8B92E5'                       // 节点颜色，从分类定义中获取
+      color: categoryDef?.color || '#8B92E5',                      // 节点颜色，从分类定义中获取
+      structHash: computeStructHash(nodeDef)                       // 结构指纹，用于热重载后检测节点定义是否变化
     }
   }
 

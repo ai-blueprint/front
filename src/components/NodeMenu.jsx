@@ -18,9 +18,11 @@
 
 import { useStore, setState } from "../store"                    // 导入store的hook和状态设置函数
 import { useReactFlow } from "@xyflow/react"                      // 导入ReactFlow的hook获取坐标转换函数
+import { computeStructHash } from "../commands/Node"              // 导入结构指纹计算函数
 import copyPasteIcon from "../assets/ContextMenu/copy-paste.svg"  // 导入复制粘贴图标
 import deleteIcon from "../assets/ContextMenu/delete-node.svg"    // 导入删除节点图标
 import renameIcon from "../assets/ContextMenu/rename.svg"         // 导入重命名图标
+import syncIcon from "../assets/ContextMenu/sync.svg"             // 导入同步定义图标
 import "../styles/NodeMenu.css"                                   // 导入节点菜单样式
 
 // ========== 菜单项组件 ==========
@@ -128,7 +130,9 @@ const NodeMenu = () => {                                          // 节点菜�
 
   const { visible, nodeId } = useStore(s => s.nodeMenu)           // 从store获取菜单可见状态和绑定的节点id
   const nodes = useStore(s => s.nodes)                            // 从store获取所有节点
+  const edges = useStore(s => s.edges)                            // 从store获取所有连线
   const viewport = useStore(s => s.viewport)                      // 从store获取视口状态
+  const registry = useStore(s => s.registry)                      // 从store获取最新registry
   const { flowToScreenPosition } = useReactFlow()                 // 从ReactFlow获取坐标转换函数
 
   if (!visible) return null                                       // 如果菜单不可见则不渲染
@@ -171,6 +175,39 @@ const NodeMenu = () => {                                          // 节点菜�
     window.cmd.deleteSelectedNodes()                             // 调用全局命令：删除所有选中的节点
   }
 
+  // ========== 同步定义逻辑 ==========
+
+  const targetNodeData = targetNode?.data                          // 获取目标节点data
+  const latestDef = registry?.nodes?.[targetNodeData?.opcode]      // 从registry取最新定义
+  const isDeleted = !latestDef                                     // opcode是否已删除
+  const isStale = isDeleted || (targetNodeData?.structHash && computeStructHash(latestDef) !== targetNodeData.structHash)  // 是否过时
+  const showSync = isStale && !isDeleted                           // 仅过时且opcode存在时显示同步按钮
+
+  const handleSync = () => {                                       // 处理同步定义
+    const newPorts = latestDef.ports || { in: [], out: [] }        // 最新端口定义
+    const newParams = latestDef.params || {}                       // 最新参数定义
+    const newStructHash = computeStructHash(latestDef)             // 最新结构指纹
+
+    const newNodes = nodes.map(n => {                              // 遍历所有节点
+      if (n.id !== nodeId) return n                                // 不是目标节点，保持原样
+      return { ...n, data: { ...n.data, ports: newPorts, params: newParams, structHash: newStructHash } }  // 覆盖ports/params/structHash
+    })
+
+    const allPortKeys = new Set()                                  // 收集新端口所有key
+    const inp = newPorts.input || newPorts.in || {}                // 输入端口
+    const outp = newPorts.output || newPorts.out || {}             // 输出端口
+    Object.keys(inp).forEach(k => allPortKeys.add(k))             // 添加输入端口key
+    Object.keys(outp).forEach(k => allPortKeys.add(k))            // 添加输出端口key
+
+    const newEdges = edges.filter(e => {                           // 清理断裂连线
+      if (e.source === nodeId && !allPortKeys.has(e.sourceHandle)) return false  // 源端口不存在
+      if (e.target === nodeId && !allPortKeys.has(e.targetHandle)) return false  // 目标端口不存在
+      return true                                                  // 保留
+    })
+
+    setState({ nodes: newNodes, edges: newEdges })                 // 更新store
+  }
+
   // ========== 渲染菜单 ==========
 
   return (                                                        // 返回节点菜单JSX结构
@@ -190,6 +227,13 @@ const NodeMenu = () => {                                          // 节点菜�
         label="删除节点"                                           // 菜单项文字
         onClick={handleDelete}                                    // 点击回调
       />
+      {showSync && (                                               // 仅过时且opcode存在时显示同步按钮
+        <MenuItem
+          icon={syncIcon}                                          // 同步图标
+          label="同步定义"                                          // 菜单项文字
+          onClick={handleSync}                                     // 点击回调
+        />
+      )}
     </div>
   )
 }

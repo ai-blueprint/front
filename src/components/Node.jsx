@@ -21,7 +21,8 @@
  */
 import { Button } from "@heroui/react";
 import { Handle, Position, useEdges, useReactFlow } from "@xyflow/react"; // ReactFlow组件和hooks
-import { setState, getState } from "../store"; // 状态管理
+import { setState, getState, useStore } from "../store"; // 状态管理
+import { computeStructHash } from "../commands/Node"; // 结构指纹计算
 import "../styles/Node.css"; // 样式
 
 const DRAG_THRESHOLD = 5; // 拖拽阈值（像素）
@@ -158,10 +159,17 @@ const Node = ({ id, data }) => {
 	// ===== 数据 =====
 	const edges = useEdges(); // 获取所有边
 	const { setEdges } = useReactFlow(); // 获取setEdges
+	const registry = useStore(s => s.registry); // 获取最新registry
 
 	const color = data?.color || "rgb(137, 146, 235)"; // 节点颜色
-	
+
 	const label = data?.name || data?.label || "未命名节点"; // 节点名称
+
+	// ===== 过时检测 =====
+	const opcode = data?.opcode; // 节点opcode
+	const latestDef = registry?.nodes?.[opcode]; // 从registry取最新定义
+	const isDeleted = !latestDef; // opcode在registry中不存在
+	const isStale = isDeleted || (data?.structHash && computeStructHash(latestDef) !== data.structHash); // 结构指纹不匹配或已删除
 
 	// 适配新旧两种格式的端口数据
 	const inputPorts = data?.ports?.input || data?.ports?.in || {}; // 输入端口（新格式是对象，旧格式是数组）
@@ -234,7 +242,14 @@ const Node = ({ id, data }) => {
 	// ===== 渲染 =====
 
 	return (
-		<Button className="container" style={{ background: color, "--node-color": color }} onClick={onClick} onDoubleClick={onDoubleClick} onContextMenu={onContextMenu}>
+		<Button className="container" style={{ background: color, "--node-color": color, position: "relative" }} onClick={onClick} onDoubleClick={onDoubleClick} onContextMenu={onContextMenu}>
+			{/* 过时遮罩 */}
+			{isStale && (
+				<div className="stale-overlay">
+					<span>{isDeleted ? "节点已删除" : "定义已更新"}</span>
+				</div>
+			)}
+
 			{/* 输入端口组 */}
 			<div className="port-container">
 				{inputs.map((port, i) => (
